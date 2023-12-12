@@ -78,6 +78,7 @@ public class PantallaVerResumenMensual extends AppCompatActivity {
     }
 
     public void obtenerImagenUrl(View v){
+        //Imagen 1 resumen mensual
         // referencia del ImageView desde el archivo XML
         ImageView imagenResumenMensual = findViewById(R.id.imagen_ver_resumen_mensual);
 
@@ -85,9 +86,17 @@ public class PantallaVerResumenMensual extends AppCompatActivity {
         String url = "https://programacion.net/files/editor/bar-chart.png";
 
         // tarea asíncrona para cargar la imagen
-        ImagenUrl imageUrl = new ImagenUrl(imagenResumenMensual);
-        imageUrl.execute(url);
+        ImagenUrl imagen1 = new ImagenUrl(imagenResumenMensual);
+        imagen1.execute(url);
+
+        // Imagen 2 grafico
+        ImageView imagenGrafico = findViewById(R.id.imagen_grafico);
+        String urlGrafico = "https://www.zurich.cl/-/media/project/zwp/chile/images/blog/foto-blog-metodo-ahorro-grafico.jpg?la=es-cl&mw=737&hash=543DA2B8C779A2D1C5270C26C293F5DB";
+        ImagenUrl imagen2 = new ImagenUrl(imagenGrafico);
+        imagen2.execute(urlGrafico);
     }
+
+
 
     private ArrayList<Double> calcularGastosMensuales(Map<String, Object> datosGastosMensuales) {
         // ArrayList para almacenar los gastos mensuales

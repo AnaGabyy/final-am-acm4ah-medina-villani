@@ -78,7 +78,7 @@
             android:layout_height="wrap_content"
             android:orientation="vertical"
             android:gravity="center"
-            app:layout_constraintTop_toBottomOf="@id/linearLayout_img_ver_resumen_mensual"
+            app:layout_constraintTop_toBottomOf="@id/linearLayout_distribucion_gastos"
             app:layout_constraintBottom_toBottomOf="parent">
 
             <!-- Titulo -->
@@ -115,18 +115,49 @@
                 android:layout_marginStart="@dimen/medida35"
                 android:layout_marginEnd="@dimen/medida35">
 
-                <TextView
-                    android:id="@+id/total_gastos_mensuales"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginEnd="@dimen/medida85"
-                    android:layout_marginTop="@dimen/medida35"
-                    android:fontFamily="@font/tt_interphases_demi_bold"
-                    android:text="@string/TextView_total_de_gastos_mensuales"
-                    android:textColor="@color/lima"
-                    android:textSize="@dimen/fuente12" />
-
             </LinearLayout>
+
+
+
+
+
+        </LinearLayout>
+
+        <LinearLayout
+
+            android:id="@+id/linearLayout_distribucion_gastos"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/medida20"
+            android:gravity="center"
+            android:orientation="vertical"
+            app:layout_constraintStart_toStartOf="@id/linearLayout_Titulo_Info"
+            app:layout_constraintTop_toTopOf="@id/linearLayout_Titulo_Info">
+
+
+            <TextView
+                android:id="@+id/total_gastos_mensuales"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="100dp"
+                android:fontFamily="@font/tt_interphases_demi_bold"
+                android:text="@string/texto_distribucion_de_gastos"
+                android:textColor="@color/lima"
+                android:textSize="@dimen/fuenteParrafo" />
+
+            <ImageView
+                android:id="@+id/imagen_grafico"
+                android:layout_width="@dimen/medida360"
+                android:layout_height="@dimen/medida250"
+                android:layout_marginTop="@dimen/medida16"
+                android:contentDescription="@string/grafico"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent" />
+            <!--                android:src="@drawable/img_pantalla_ver_resumen_mensual"-->
+
+
+        </LinearLayout>
 
             <!-- Botón "Volver" -->
             <Button
@@ -136,10 +167,9 @@
                 android:layout_marginTop="@dimen/medida35"
                 android:backgroundTint="@color/lima"
                 android:text="@string/boton_volver"
-                android:textColor="@color/verde_oscuro"/>
-
-        </LinearLayout>
-
+                android:textColor="@color/verde_oscuro"
+                android:layout_marginStart="30dp"
+                />
 
     </LinearLayout>
 
