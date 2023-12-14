@@ -1,6 +1,6 @@
 package parcial1.spendify;
 
-import androidx.appcompat.app.AlertDialog;
+import android.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.content.Intent;
@@ -8,7 +8,6 @@ import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
-import android.widget.TextView;
 import android.widget.Toast;
 
 public class PantallaVerConfiguracion extends AppCompatActivity {
@@ -75,6 +74,7 @@ public class PantallaVerConfiguracion extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 onClickAceptarModificarContrasena(v);
+                dialog.dismiss(); // Cerrar el diálogo después de hacer clic en Aceptar
             }
         });
 
@@ -94,7 +94,6 @@ public class PantallaVerConfiguracion extends AppCompatActivity {
         // Verificar la contraseña actual
         verificarContrasenaActual(contrasenaActual, nuevaContrasena);
     }
-
 
     // Método para verificar la contraseña actual antes de cambiarla
     private void verificarContrasenaActual(String contrasenaActual, String nuevaContrasena) {
@@ -130,7 +129,7 @@ public class PantallaVerConfiguracion extends AppCompatActivity {
         });
     }
 
-    // ---------------------------------------------- Opción "Modificar contraseña" ----------------------------------------------
+    // ---------------------------------------------- Opción "Modificar ingreso mensual" ----------------------------------------------
 
     String nuevoIngresoMensual;  // Almacenar el nuevo ingreso mensual
 
@@ -156,13 +155,11 @@ public class PantallaVerConfiguracion extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 // Obtener el nuevo ingreso mensual desde el EditText
-                String nuevoIngresoMensual = editTextNuevoIngresoMensual.getText().toString();
-
-                // Configurar el nuevo ingreso mensual en la propiedad de clase
-                configurarNuevoIngresoMensual(nuevoIngresoMensual);
+                nuevoIngresoMensual = editTextNuevoIngresoMensual.getText().toString();
 
                 // Llamar al método original para manejar el clic del botón
                 onClickAceptarModificarIngresoMensual(v);
+                dialog.dismiss(); // Cerrar el diálogo después de hacer clic en Aceptar
             }
         });
 
