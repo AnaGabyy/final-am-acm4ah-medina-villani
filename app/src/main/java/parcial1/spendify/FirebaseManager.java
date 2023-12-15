@@ -276,6 +276,12 @@ public class FirebaseManager {
         return total;
     }
 
+    // Método para obtener el ingreso mensual del usuario
+    public Task<DocumentSnapshot> obtenerIngresoMensual(String userEmail) {
+        DocumentReference ingresoMensualRef = firestore.collection("usuarios").document(userEmail);
+        return ingresoMensualRef.get();
+    }
+
     // ----------------------------------------------------------------------------------------
 
     public interface AuthCallback {

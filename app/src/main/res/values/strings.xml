@@ -138,9 +138,13 @@
 
     <!-- Titulo y textos -->
     <string name="titulo_resumen_mensual">Resumen mensual</string>
+    <string name="TextView_ingreso_mensual">Ingreso mensual</string>
     <string name="TextView_total_de_gastos_mensuales">Total de gastos mensuales</string>
+    <string name="TextView_fondos_restantes">Fondos restantes</string>
     <string name="texto_distribucion_de_gastos">Distribución de gastos</string>
     <string name="formato_total_de_gastos_mensuales">Total de gastos mensuales: %.2f</string>
+    <string name="formato_ingreso_mensual">Ingreso mensual: %.2f</string>
+    <string name="formato_fondos_restantes">Fondos restantes: %.2f</string>
 
     <!-- Descripción de imágenes -->
     <string name="imagen_de_pantalla_ver_resumen_mensual">Imagen de pantalla Ver Resumen Mensual</string>

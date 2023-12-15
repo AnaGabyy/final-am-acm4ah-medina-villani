@@ -1,5 +1,6 @@
 package parcial1.spendify;
 
+import static android.content.ContentValues.TAG;
 import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
@@ -9,16 +10,20 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import androidx.appcompat.app.AppCompatActivity;
-
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.firestore.DocumentSnapshot;
 
 import java.util.ArrayList;
 import java.util.Map;
-import java.util.Objects;
+
+import androidx.annotation.NonNull;
+import androidx.appcompat.app.AppCompatActivity;
 
 public class PantallaVerResumenMensual extends AppCompatActivity {
     private ArrayList<Double> gastosMensuales; // Lista de gastos mensuales
+    private double ingresoMensual; // Ingreso mensual del usuario
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -50,12 +55,83 @@ public class PantallaVerResumenMensual extends AppCompatActivity {
                             // Mostrar el total de gastos mensuales en el TextView
                             TextView totalGastosMensualesTextView = findViewById(R.id.total_gastos_mensuales);
                             totalGastosMensualesTextView.setText(getString(R.string.formato_total_de_gastos_mensuales, totalGastosMensuales));
+
+                            // Obtener y mostrar el ingreso mensual del usuario
+                            obtenerIngresoMensual(userEmail, totalGastosMensuales);
                         }
                     })
                     .addOnFailureListener(e -> {
                         // Rrror al obtener los gastos mensuales
                         Toast.makeText(this, "Error al obtener los gastos mensuales: " + e.getMessage(), Toast.LENGTH_SHORT).show();
                     });
+
+            // Obtén el ingreso mensual del usuario
+            Task<DocumentSnapshot> ingresoMensualTask = FirebaseManager.getInstance().obtenerIngresoMensual(userEmail);
+            ingresoMensualTask.addOnCompleteListener(new OnCompleteListener<DocumentSnapshot>() {
+                @Override
+                public void onComplete(@NonNull Task<DocumentSnapshot> ingresoMensualTask) {
+                    if (ingresoMensualTask.isSuccessful()) {
+                        DocumentSnapshot ingresoMensualDocument = ingresoMensualTask.getResult();
+                        if (ingresoMensualDocument.exists()) {
+                            // Documento de ingreso mensual existe, obtener el dato
+                            Double ingresoMensual = ingresoMensualDocument.getDouble("ingresoMensual");
+
+                            if (ingresoMensual != null) {
+                                // Muestra el ingreso mensual en el TextView correspondiente
+                                TextView ingresoMensualTextView = findViewById(R.id.ingreso_mensual);
+                                ingresoMensualTextView.setText(getString(R.string.formato_ingreso_mensual, ingresoMensual));
+
+                                // Continúa con el resto de tu lógica, por ejemplo, obtener los gastos mensuales
+                                FirebaseManager.getInstance().obtenerGastosMensuales(userEmail)
+                                        .addOnCompleteListener(new OnCompleteListener<DocumentSnapshot>() {
+                                            @Override
+                                            public void onComplete(@NonNull Task<DocumentSnapshot> gastosTask) {
+                                                if (gastosTask.isSuccessful()) {
+                                                    DocumentSnapshot gastosDocument = gastosTask.getResult();
+                                                    if (gastosDocument.exists()) {
+                                                        // Documento de gastos existe, obtén los datos
+                                                        Map<String, Object> datosGastosMensuales = gastosDocument.getData();
+                                                        assert datosGastosMensuales != null;
+                                                        ArrayList<Double> gastosMensuales = calcularGastosMensuales(datosGastosMensuales);
+
+                                                        // Calcular el total de gastos mensuales usando el método existente
+                                                        double totalGastosMensuales = FirebaseManager.getInstance().calcularTotalGastosMensuales(gastosMensuales);
+
+                                                        // Muestra el total de gastos mensuales en el TextView correspondiente
+                                                        TextView totalGastosMensualesTextView = findViewById(R.id.total_gastos_mensuales);
+                                                        totalGastosMensualesTextView.setText(getString(R.string.formato_total_de_gastos_mensuales, totalGastosMensuales));
+
+                                                        // Calcula los fondos restantes
+                                                        double fondosRestantes = ingresoMensual - totalGastosMensuales;
+
+                                                        // Muestra los fondos restantes en el TextView correspondiente
+                                                        TextView fondosRestantesTextView = findViewById(R.id.fondos_restantes);
+                                                        fondosRestantesTextView.setText(getString(R.string.formato_fondos_restantes, fondosRestantes));
+
+                                                    } else {
+                                                        // El documento de gastos no existe
+                                                        Log.d(TAG, "No such document for gastos mensuales");
+                                                    }
+                                                } else {
+                                                    // Error al obtener el documento de gastos
+                                                    Log.d(TAG, "get failed with ", gastosTask.getException());
+                                                }
+                                            }
+                                        });
+                            } else {
+                                // Maneja el caso en que ingresoMensual es null
+                                Log.d(TAG, "Ingreso mensual is null");
+                            }
+                        } else {
+                            // El documento de ingreso mensual no existe
+                            Log.d(TAG, "No such document for ingreso mensual");
+                        }
+                    } else {
+                        // Error al obtener el documento de ingreso mensual
+                        Log.d(TAG, "get failed with ", ingresoMensualTask.getException());
+                    }
+                }
+            });
 
             // OnClickListener para el botón "Volver"
             Button botonVolver = findViewById(R.id.boton_volver);
@@ -88,15 +164,7 @@ public class PantallaVerResumenMensual extends AppCompatActivity {
         // tarea asíncrona para cargar la imagen
         ImagenUrl imagen1 = new ImagenUrl(imagenResumenMensual);
         imagen1.execute(url);
-
-        // Imagen 2 grafico
-        ImageView imagenGrafico = findViewById(R.id.imagen_grafico);
-        String urlGrafico = "https://www.zurich.cl/-/media/project/zwp/chile/images/blog/foto-blog-metodo-ahorro-grafico.jpg?la=es-cl&mw=737&hash=543DA2B8C779A2D1C5270C26C293F5DB";
-        ImagenUrl imagen2 = new ImagenUrl(imagenGrafico);
-        imagen2.execute(urlGrafico);
     }
-
-
 
     private ArrayList<Double> calcularGastosMensuales(Map<String, Object> datosGastosMensuales) {
         // ArrayList para almacenar los gastos mensuales
@@ -118,6 +186,42 @@ public class PantallaVerResumenMensual extends AppCompatActivity {
         }
 
         return gastosMensuales;
+    }
+
+    // Método para obtener el ingreso mensual del usuario
+    private void obtenerIngresoMensual(String userEmail, double totalGastosMensuales) {
+        FirebaseManager.getInstance().obtenerIngresoMensual(userEmail)
+                .addOnSuccessListener(documentSnapshot -> {
+                    if (documentSnapshot.exists()) {
+                        // Obtener el ingreso mensual y mostrarlo en el TextView correspondiente
+                        Double ingresoMensual = documentSnapshot.getDouble("ingresoMensual");
+                        if (ingresoMensual != null) {
+                            this.ingresoMensual = ingresoMensual;
+                            TextView ingresoMensualTextView = findViewById(R.id.ingreso_mensual);
+                            ingresoMensualTextView.setText(getString(R.string.formato_ingreso_mensual, ingresoMensual));
+                            calcularYMostrarFondosRestantes(totalGastosMensuales);
+
+                        } else {
+                            // Maneja el caso en que ingresoMensual es null
+                            Log.d(TAG, "Ingreso mensual is null");
+                        }
+
+                    } else {
+                        // El documento de ingreso mensual no existe
+                        Log.d(TAG, "No such document for ingreso mensual");
+                    }
+                })
+                .addOnFailureListener(e -> {
+                    // Error al obtener el ingreso mensual
+                    Toast.makeText(this, "Error al obtener el ingreso mensual: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                });
+    }
+
+    // Método para calcular y mostrar los fondos restantes
+    private void calcularYMostrarFondosRestantes(double totalGastosMensuales) {
+        double fondosRestantes = ingresoMensual - totalGastosMensuales;
+        TextView fondosRestantesTextView = findViewById(R.id.fondos_restantes);
+        fondosRestantesTextView.setText(getString(R.string.formato_fondos_restantes, fondosRestantes));
     }
 
     private void volverAPantallaIndex() {
