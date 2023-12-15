@@ -65,8 +65,6 @@ public class PantallaVerConfiguracion extends AppCompatActivity {
         AlertDialog dialog = builder.create();
 
         // Obtener referencias a los elementos del diálogo
-        EditText editTextContrasenaActual = dialogView.findViewById(R.id.editText_contrasena_actual);
-        EditText editTextNuevaContrasena = dialogView.findViewById(R.id.editText_contrasena_nueva);
         Button botonAceptar = dialogView.findViewById(R.id.boton_aceptar);
 
         // Configurar el botón "Aceptar"
@@ -132,11 +130,6 @@ public class PantallaVerConfiguracion extends AppCompatActivity {
     // ---------------------------------------------- Opción "Modificar ingreso mensual" ----------------------------------------------
 
     String nuevoIngresoMensual;  // Almacenar el nuevo ingreso mensual
-
-    // Método para configurar el nuevo ingreso mensual antes de mostrar el diálogo
-    private void configurarNuevoIngresoMensual(String nuevoIngresoMensual) {
-        this.nuevoIngresoMensual = nuevoIngresoMensual;
-    }
 
     // Método para mostrar el diálogo de opción Modificar ingreso mensual
     private void mostrarDialogoModificarIngresoMensual() {
@@ -225,11 +218,28 @@ public class PantallaVerConfiguracion extends AppCompatActivity {
         String contrasenaActual = editTextContrasenaActual.getText().toString();
 
         // Verificar la contraseña actual antes de proceder con la eliminación de la cuenta
-        verificarContrasenaActual(contrasenaActual, new FirebaseManager.AuthCallback() {
+        verificarContrasenaActual(contrasenaActual);
+    }
+
+    // Método para verificar la contraseña actual antes de proceder con la eliminación de la cuenta
+    private void verificarContrasenaActual(String contrasenaActual) {
+        FirebaseManager.getInstance().verificarContrasenaActual(contrasenaActual, new FirebaseManager.AuthCallback() {
             @Override
             public void onSuccess() {
                 // Contraseña verificada, proceder con la eliminación de la cuenta
-                eliminarCuenta();
+                FirebaseManager.getInstance().eliminarCuenta(new FirebaseManager.AuthCallback() {
+                    @Override
+                    public void onSuccess() {
+                        // Eliminación de cuenta exitosa, redirigir al usuario a la pantalla inicial
+                        irAPrimeraPantalla();
+                    }
+
+                    @Override
+                    public void onFailure(String errorMessage) {
+                        // Mensaje de error al eliminar la cuenta
+                        Toast.makeText(PantallaVerConfiguracion.this, "Error al eliminar la cuenta: " + errorMessage, Toast.LENGTH_SHORT).show();
+                    }
+                });
             }
 
             @Override
@@ -237,24 +247,14 @@ public class PantallaVerConfiguracion extends AppCompatActivity {
                 // Mensaje de error si la contraseña no es válida
                 Toast.makeText(PantallaVerConfiguracion.this, "Error: " + errorMessage, Toast.LENGTH_SHORT).show();
             }
-        }.toString());
+        });
     }
 
-    // Método para manejar la eliminación de la cuenta
-    private void eliminarCuenta() {
-        FirebaseManager.getInstance().eliminarCuenta(new FirebaseManager.AuthCallback() {
-            @Override
-            public void onSuccess() {
-                // Eliminación de cuenta exitosa, redirigir al usuario a la pantalla inicial
-                volverAPantallaIndex();
-            }
-
-            @Override
-            public void onFailure(String errorMessage) {
-                // Mensaje de error al eliminar la cuenta
-                Toast.makeText(PantallaVerConfiguracion.this, "Error al eliminar la cuenta: " + errorMessage, Toast.LENGTH_SHORT).show();
-            }
-        });
+    // Método para redirigir al usuario a PrimeraPantalla
+    private void irAPrimeraPantalla() {
+        Intent intent = new Intent(this, PrimeraPantalla.class);
+        startActivity(intent);
+        finish(); // Cierra la actividad actual para que no quede en la pila de actividades
     }
 
     // Método para volver al Index

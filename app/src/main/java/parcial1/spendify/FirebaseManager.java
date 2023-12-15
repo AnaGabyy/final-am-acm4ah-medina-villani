@@ -286,7 +286,6 @@ public class FirebaseManager {
 
     public interface AuthCallback {
         void onSuccess();
-
         void onFailure(String errorMessage);
     }
 
