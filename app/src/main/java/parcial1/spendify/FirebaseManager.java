@@ -81,7 +81,7 @@ public class FirebaseManager {
                             callback.onSuccess();
                         } else {
                             // Error en la reautenticación, notificar al callback
-                            callback.onFailure(Objects.requireNonNull(task.getException()).getMessage());
+                            callback.onFailure("Error al reautenticar: " + Objects.requireNonNull(task.getException()).getMessage());
                         }
                     });
         } else {
@@ -89,6 +89,7 @@ public class FirebaseManager {
             callback.onFailure("Usuario no autenticado");
         }
     }
+
 
     // Cambiar la contraseña del usuario
     public void cambiarContrasena(String newPassword, AuthCallback callback) {
@@ -117,21 +118,27 @@ public class FirebaseManager {
             // Obtener referencia al documento del usuario
             DocumentReference usuarioRef = firestore.collection("usuarios").document(Objects.requireNonNull(user.getEmail()));
 
-            // Crear un mapa con el nuevo ingreso mensual
-            Map<String, Object> nuevoIngresoMap = new HashMap<>();
-            nuevoIngresoMap.put("ingresoMensual", nuevoIngresoMensual);
+            // Verificar si el nuevo ingreso mensual es diferente al actual
+            if (!nuevoIngresoMensual.isEmpty() && !nuevoIngresoMensual.equals(user.getEmail())) {
+                // Crear un mapa con el nuevo ingreso mensual
+                Map<String, Object> nuevoIngresoMap = new HashMap<>();
+                nuevoIngresoMap.put("ingresoMensual", nuevoIngresoMensual);
 
-            // Actualizar el ingreso mensual en Firestore
-            usuarioRef.update(nuevoIngresoMap)
-                    .addOnCompleteListener(task -> {
-                        if (task.isSuccessful()) {
-                            // Actualización exitosa
-                            callback.onSuccess();
-                        } else {
-                            // Error en la actualización
-                            callback.onFailure(Objects.requireNonNull(task.getException()).getMessage());
-                        }
-                    });
+                // Actualizar el ingreso mensual en Firestore
+                usuarioRef.update(nuevoIngresoMap)
+                        .addOnCompleteListener(task -> {
+                            if (task.isSuccessful()) {
+                                // Actualización exitosa
+                                callback.onSuccess();
+                            } else {
+                                // Error en la actualización
+                                callback.onFailure("Error al actualizar el ingreso mensual: " + Objects.requireNonNull(task.getException()).getMessage());
+                            }
+                        });
+            } else {
+                // Mostrar mensaje de que el ingreso mensual no se cambió
+                callback.onFailure("El nuevo ingreso mensual es el mismo que el actual");
+            }
         } else {
             // El usuario no está autenticado
             callback.onFailure("Usuario no autenticado");
@@ -290,7 +297,9 @@ public class FirebaseManager {
     }
 
     // Método para cerrar la sesión
-    public void cerrarSesion() {
+    public void cerrarSesion(AuthCallback callback) {
         mAuth.signOut();
+        // Notificar sobre el éxito del cierre de sesión
+        callback.onSuccess();
     }
 }

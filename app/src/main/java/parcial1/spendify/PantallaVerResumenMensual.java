@@ -15,6 +15,7 @@ import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.DocumentSnapshot;
 
+import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.Map;
 
@@ -24,6 +25,10 @@ import androidx.appcompat.app.AppCompatActivity;
 public class PantallaVerResumenMensual extends AppCompatActivity {
     private ArrayList<Double> gastosMensuales; // Lista de gastos mensuales
     private double ingresoMensual; // Ingreso mensual del usuario
+    private static final String TAG = "PantallaVerResumenMensual";
+
+    // Referencia débil para evitar fugas de memoria
+    private WeakReference<PantallaVerResumenMensual> weakReference;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -38,31 +43,43 @@ public class PantallaVerResumenMensual extends AppCompatActivity {
             // Obtener el correo electrónico del usuario
             String userEmail = usuarioActual.getEmail();
 
+            // Inicializar la referencia débil
+            weakReference = new WeakReference<>(this);
+
             // Llama a obtenerImagenUrl al iniciar la aplicación
             obtenerImagenUrl(null);
 
             // Obtén los gastos mensuales del usuario
             FirebaseManager.getInstance().obtenerGastosMensuales(userEmail)
                     .addOnSuccessListener(documentSnapshot -> {
+                        PantallaVerResumenMensual activity = weakReference.get();
+                        if (activity == null || activity.isFinishing() || activity.isDestroyed()) {
+                            // Si la actividad ya no es válida, evitar operaciones en la interfaz de usuario
+                            return;
+                        }
+
                         if (documentSnapshot.exists()) { // Si el documento existe, obtiene los datos y realiza los cálculos
                             Map<String, Object> datosGastosMensuales = documentSnapshot.getData();
                             assert datosGastosMensuales != null;
-                            gastosMensuales = calcularGastosMensuales(datosGastosMensuales);
+                            activity.gastosMensuales = activity.calcularGastosMensuales(datosGastosMensuales);
 
                             // Calcular el total de gastos mensuales
-                            double totalGastosMensuales = FirebaseManager.getInstance().calcularTotalGastosMensuales(gastosMensuales);
+                            double totalGastosMensuales = FirebaseManager.getInstance().calcularTotalGastosMensuales(activity.gastosMensuales);
 
                             // Mostrar el total de gastos mensuales en el TextView
                             TextView totalGastosMensualesTextView = findViewById(R.id.total_gastos_mensuales);
                             totalGastosMensualesTextView.setText(getString(R.string.formato_total_de_gastos_mensuales, totalGastosMensuales));
 
                             // Obtener y mostrar el ingreso mensual del usuario
-                            obtenerIngresoMensual(userEmail, totalGastosMensuales);
+                            activity.obtenerIngresoYMostrar(userEmail, totalGastosMensuales);
                         }
                     })
                     .addOnFailureListener(e -> {
-                        // Rrror al obtener los gastos mensuales
-                        Toast.makeText(this, "Error al obtener los gastos mensuales: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                        PantallaVerResumenMensual activity = weakReference.get();
+                        if (activity != null && !activity.isFinishing() && !activity.isDestroyed()) {
+                            // Error al obtener los gastos mensuales
+                            Toast.makeText(activity, "Error al obtener los gastos mensuales: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                        }
                     });
 
             // Obtén el ingreso mensual del usuario
@@ -188,32 +205,35 @@ public class PantallaVerResumenMensual extends AppCompatActivity {
         return gastosMensuales;
     }
 
-    // Método para obtener el ingreso mensual del usuario
-    private void obtenerIngresoMensual(String userEmail, double totalGastosMensuales) {
+    // Método para obtener y mostrar el ingreso mensual
+    private void obtenerIngresoYMostrar(String userEmail, double totalGastosMensuales) {
         FirebaseManager.getInstance().obtenerIngresoMensual(userEmail)
                 .addOnSuccessListener(documentSnapshot -> {
+                    PantallaVerResumenMensual activity = weakReference.get();
+                    if (activity == null || activity.isFinishing() || activity.isDestroyed()) {
+                        // Si la actividad ya no es válida, evitar operaciones en la interfaz de usuario
+                        return;
+                    }
+
                     if (documentSnapshot.exists()) {
-                        // Obtener el ingreso mensual y mostrarlo en el TextView correspondiente
                         Double ingresoMensual = documentSnapshot.getDouble("ingresoMensual");
                         if (ingresoMensual != null) {
-                            this.ingresoMensual = ingresoMensual;
+                            activity.ingresoMensual = ingresoMensual;
                             TextView ingresoMensualTextView = findViewById(R.id.ingreso_mensual);
                             ingresoMensualTextView.setText(getString(R.string.formato_ingreso_mensual, ingresoMensual));
-                            calcularYMostrarFondosRestantes(totalGastosMensuales);
-
+                            activity.calcularYMostrarFondosRestantes(totalGastosMensuales);
                         } else {
-                            // Maneja el caso en que ingresoMensual es null
                             Log.d(TAG, "Ingreso mensual is null");
                         }
-
                     } else {
-                        // El documento de ingreso mensual no existe
                         Log.d(TAG, "No such document for ingreso mensual");
                     }
                 })
                 .addOnFailureListener(e -> {
-                    // Error al obtener el ingreso mensual
-                    Toast.makeText(this, "Error al obtener el ingreso mensual: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                    PantallaVerResumenMensual activity = weakReference.get();
+                    if (activity != null && !activity.isFinishing() && !activity.isDestroyed()) {
+                        Toast.makeText(activity, "Error al obtener el ingreso mensual: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                    }
                 });
     }
 

@@ -276,7 +276,6 @@ public class PantallaVerConfiguracion extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 onClickAceptarEliminarCuenta(v);
-                dialog.dismiss(); // Cerrar el diálogo después de hacer clic en Aceptar
             }
         });
 
@@ -284,43 +283,59 @@ public class PantallaVerConfiguracion extends AppCompatActivity {
         dialog.show();
     }
 
-    // Método para manejar el botón "Aceptar" en el diálogo de Eliminar cuenta
+    // Método para manejar el botón "Aceptar" en Eliminar cuenta
     public void onClickAceptarEliminarCuenta(View view) {
         // Obtener la contraseña actual desde el EditText
-        EditText editTextContrasenaActual = findViewById(R.id.editText_contrasena_actual);
+        EditText editTextContrasenaActual = dialog.findViewById(R.id.editText_contrasena_actual);
         String contrasenaActual = editTextContrasenaActual.getText().toString();
 
         // Verificar la contraseña actual antes de proceder con la eliminación de la cuenta
         verificarContrasenaActual(contrasenaActual);
     }
 
-    // Método para verificar la contraseña actual antes de proceder con la eliminación de la cuenta
+    // Método para verificar la contraseña actual
     private void verificarContrasenaActual(String contrasenaActual) {
         FirebaseManager.getInstance().verificarContrasenaActual(contrasenaActual, new FirebaseManager.AuthCallback() {
             @Override
             public void onSuccess() {
-                // Contraseña verificada, proceder con la eliminación de la cuenta
-                FirebaseManager.getInstance().eliminarCuenta(new FirebaseManager.AuthCallback() {
-                    @Override
-                    public void onSuccess() {
-                        // Eliminación de cuenta exitosa, redirigir al usuario a la pantalla inicial
-                        irAPrimeraPantalla();
-                    }
-
-                    @Override
-                    public void onFailure(String errorMessage) {
-                        // Mensaje de error al eliminar la cuenta
-                        Toast.makeText(PantallaVerConfiguracion.this, "Error al eliminar la cuenta: " + errorMessage, Toast.LENGTH_SHORT).show();
-                    }
-                });
+                // Contraseña verificada, eliminar cuenta
+                eliminarCuenta();
             }
 
             @Override
             public void onFailure(String errorMessage) {
                 // Mensaje de error si la contraseña no es válida
                 Toast.makeText(PantallaVerConfiguracion.this, "Error: " + errorMessage, Toast.LENGTH_SHORT).show();
+                // Cerrar el diálogo en caso de error
+                cerrarDialogoEliminarCuenta();
             }
         });
+    }
+
+    // Método para eliminar la cuenta
+    private void eliminarCuenta(){
+        FirebaseManager.getInstance().eliminarCuenta(new FirebaseManager.AuthCallback() {
+            @Override
+            public void onSuccess() {
+                cerrarDialogoEliminarCuenta();
+                irAPrimeraPantalla();
+            }
+
+            @Override
+            public void onFailure(String errorMessage) {
+                // Mensaje de error al eliminar la cuenta
+                Toast.makeText(PantallaVerConfiguracion.this, "Error al eliminar la cuenta: " + errorMessage, Toast.LENGTH_SHORT).show();
+                // Cerrar el diálogo en caso de error
+                cerrarDialogoEliminarCuenta();
+            }
+        });
+    }
+
+    // Método para cerrar el diálogo
+    private void cerrarDialogoEliminarCuenta() {
+        if (dialog != null && dialog.isShowing()) {
+            dialog.dismiss();
+        }
     }
 
     // Método para redirigir al usuario a PrimeraPantalla
