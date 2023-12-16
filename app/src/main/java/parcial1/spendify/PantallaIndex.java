@@ -125,9 +125,18 @@ public class PantallaIndex extends AppCompatActivity {
                 FirebaseUser currentUser = firebaseManager.getCurrentUser();
 
                 if (currentUser != null) {
-                    firebaseManager.cerrarSesion();
-                    irAPrimeraPantalla();
-                    dialog.dismiss();
+                    firebaseManager.cerrarSesion(new FirebaseManager.AuthCallback() {
+                        @Override
+                        public void onSuccess() {
+                            irAPrimeraPantalla();
+                            dialog.dismiss();
+                        }
+
+                        @Override
+                        public void onFailure(String errorMessage) {
+                            Toast.makeText(PantallaIndex.this, "Error al cerrar sesión: " + errorMessage, Toast.LENGTH_SHORT).show();
+                        }
+                    });
                 }
             }
         });
