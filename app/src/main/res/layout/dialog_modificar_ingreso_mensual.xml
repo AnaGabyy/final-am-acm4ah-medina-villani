@@ -19,17 +19,18 @@
         android:textColor="@color/lima"/>
 
     <TextView
-        android:id="@+id/textViewSueldo"
+        android:id="@+id/textView_nuevo_sueldo"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="@dimen/medida35"
         android:fontFamily="@font/tt_interphases_demi_bold"
         android:textColor="@color/lima"
         android:textSize="@dimen/fuenteParrafo"
-        android:text="@string/sueldo"/>
+        android:paddingStart="@dimen/medida7"
+        android:text="@string/nuevo_sueldo"/>
 
     <EditText
-        android:id="@+id/EditText_nuevoSueldo"
+        android:id="@+id/editText_nuevoIngresoMensual"
         android:layout_width="@dimen/medida360"
         android:layout_height="wrap_content"
         android:layout_marginTop="@dimen/medida7"
@@ -39,8 +40,8 @@
         android:fontFamily="@font/tt_interphases_light"
         android:hint="@string/EditText_monto"
         android:inputType="numberDecimal"
-        android:minHeight="48dp"
-        android:paddingStart="15dp"
+        android:minHeight="@dimen/medida50"
+        android:paddingStart="@dimen/medida16"
         android:textColorHint="@color/lima"
         android:textSize="15sp" />
 
