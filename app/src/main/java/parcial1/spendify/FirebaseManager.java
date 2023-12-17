@@ -260,6 +260,78 @@ public class FirebaseManager {
         }
     }
 
+    // Variables para almacenar los datos del usuario
+    private String ingresoMensual;
+    private ArrayList<String> tiposGastos;
+    private ArrayList<String> montos;
+
+    // Método para obtener y guardar los datos del usuario
+    public void obtenerYGuardarDatosUsuario(String userEmail, FirebaseManager firebaseManager, AuthCallback callback) {
+        // Obtener referencia al documento del usuario
+        DocumentReference usuarioRef = firestore.collection("usuarios").document(userEmail);
+
+        // Obtener los datos del usuario
+        usuarioRef.get().addOnCompleteListener(task -> {
+            if (task.isSuccessful()) {
+                DocumentSnapshot document = task.getResult();
+                if (document.exists()) {
+                    String ingresoMensual = document.getString("ingresoMensual");
+
+                    // Crear un ArrayList para guardar los gastos fijos del usuario
+                    ArrayList<String> tiposGastos = new ArrayList<>();
+                    ArrayList<String> montos = new ArrayList<>();
+
+                    // Obtener los gastos fijos del documento del usuario
+                    if (document.contains("gastosFijos")) {
+                        // Utilizar un parámetro de tipo genérico
+                        Map<String, Object> gastosFijosMap = document.getData();
+                        if (gastosFijosMap != null) {
+                            for (Map.Entry<String, Object> entry : gastosFijosMap.entrySet()) {
+                                tiposGastos.add(entry.getKey());
+                                montos.add(String.valueOf(entry.getValue()));
+                            }
+                        }
+                    }
+
+                    // Establecer el ingreso mensual y los gastos fijos en FirebaseManager
+                    firebaseManager.setIngresoMensual(ingresoMensual);
+                    firebaseManager.setGastosFijos(tiposGastos, montos);
+
+                    callback.onSuccess();
+                } else {
+                    // El documento del usuario no existe
+                    callback.onFailure("Documento de usuario no encontrado");
+                }
+            } else {
+                // Error al obtener los datos del usuario
+                callback.onFailure("Error al obtener datos del usuario: " + Objects.requireNonNull(task.getException()).getMessage());
+            }
+        });
+    }
+
+    // Métodos para acceder y modificar el ingreso mensual
+    public String getIngresoMensual() {
+        return ingresoMensual;
+    }
+
+    public void setIngresoMensual(String ingresoMensual) {
+        this.ingresoMensual = ingresoMensual;
+    }
+
+    // Métodos para acceder y modificar los gastos fijos
+    public ArrayList<String> getTiposGastos() {
+        return tiposGastos;
+    }
+
+    public ArrayList<String> getMontos() {
+        return montos;
+    }
+
+    public void setGastosFijos(ArrayList<String> tiposGastos, ArrayList<String> montos) {
+        this.tiposGastos = tiposGastos;
+        this.montos = montos;
+    }
+
     // ------------------------------- PantallaVerResumenMensual -------------------------------
 
     // Obtener los gastos mensuales del usuario

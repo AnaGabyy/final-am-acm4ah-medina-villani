@@ -38,6 +38,31 @@ public class PantallaVerGastos extends AppCompatActivity {
         currentUser = firebaseManager.getCurrentUser();
         tableLayout = findViewById(R.id.tableLayout);
 
+        // Obtener y guardar los datos del usuario
+        firebaseManager.obtenerYGuardarDatosUsuario(currentUser.getEmail(), firebaseManager, new FirebaseManager.AuthCallback() {
+            @Override
+            public void onSuccess() {
+                // Acceder a la instancia de FirebaseManager y obtener los datos actualizados
+                FirebaseManager firebaseManager = FirebaseManager.getInstance();
+
+                // Obtener los gastos fijos desde FirebaseManager
+                ArrayList<String> tiposGastos = firebaseManager.getTiposGastos();
+                ArrayList<String> montos = firebaseManager.getMontos();
+
+                // Llenar la tabla con la información de gastos fijos
+                if (tiposGastos != null && montos != null) {
+                    for (int i = 0; i < tiposGastos.size(); i++) {
+                        agregarFilaTabla(tiposGastos.get(i), montos.get(i));
+                    }
+                }
+
+            }
+
+            @Override
+            public void onFailure(String errorMessage) {
+                // Manejar el fallo según sea necesario
+            }
+        });
 
         // Obtener la información de gastos fijos del Intent
         ArrayList<String> tiposGastos = getIntent().getStringArrayListExtra("tiposGastos");
