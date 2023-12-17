@@ -1,13 +1,13 @@
 {
   "project_info": {
-    "project_number": "53662105261",
-    "project_id": "parcial-am-medina-villani",
-    "storage_bucket": "parcial-am-medina-villani.appspot.com"
+    "project_number": "905308007587",
+    "project_id": "final-am-medina-villani",
+    "storage_bucket": "final-am-medina-villani.appspot.com"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:53662105261:android:6056a0dfd769b2a37c5024",
+        "mobilesdk_app_id": "1:905308007587:android:08f16cad67bcbe3243a316",
         "android_client_info": {
           "package_name": "parcial1.spendify"
         }
@@ -15,7 +15,7 @@
       "oauth_client": [],
       "api_key": [
         {
-          "current_key": "AIzaSyCWfILdzv9JzfoJVCBkZ-8CW_ll1nt0wI4"
+          "current_key": "AIzaSyBX2dChDUk_SjadI0KuRZrnsOlv0HH4ZJM"
         }
       ],
       "services": {
