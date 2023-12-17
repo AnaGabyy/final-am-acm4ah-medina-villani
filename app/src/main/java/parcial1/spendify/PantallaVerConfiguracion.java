@@ -5,12 +5,22 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.os.Handler;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Toast;
 
+import com.google.firebase.auth.FirebaseUser;
+
 public class PantallaVerConfiguracion extends AppCompatActivity {
+
+    private boolean cambioContrasenaExitoso = false; // Variable para controlar el cambio de contraseña
+    private boolean cambioSueldoExitoso = false; // Variable para controlar el cambio del sueldo
+    private EditText editTextNuevoIngresoMensual;
+    private String nuevoIngresoMensual;
+    private Double ingresoMensualActual;
+    private AlertDialog dialog; // Variable para almacenar el diálogo
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -26,7 +36,7 @@ public class PantallaVerConfiguracion extends AppCompatActivity {
             }
         });
 
-        //OnClickListener para opción Modificar ingreso mensual
+        // OnClickListener para opción Modificar ingreso mensual
         Button botonModificarIngreso = findViewById(R.id.boton_modificar_ingreso_mensual);
         botonModificarIngreso.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -62,7 +72,7 @@ public class PantallaVerConfiguracion extends AppCompatActivity {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         View dialogView = getLayoutInflater().inflate(R.layout.dialog_modificar_contrasena, null);
         builder.setView(dialogView);
-        AlertDialog dialog = builder.create();
+        dialog = builder.create();
 
         // Obtener referencias a los elementos del diálogo
         Button botonAceptar = dialogView.findViewById(R.id.boton_aceptar);
@@ -72,7 +82,6 @@ public class PantallaVerConfiguracion extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 onClickAceptarModificarContrasena(v);
-                dialog.dismiss(); // Cerrar el diálogo después de hacer clic en Aceptar
             }
         });
 
@@ -98,7 +107,7 @@ public class PantallaVerConfiguracion extends AppCompatActivity {
         FirebaseManager.getInstance().verificarContrasenaActual(contrasenaActual, new FirebaseManager.AuthCallback() {
             @Override
             public void onSuccess() {
-                // La contraseña actual es válida, proceder a cambiar la contraseña
+                // Si la contraseña actual es válida, cambiar la contraseña
                 cambiarContrasena(nuevaContrasena);
             }
 
@@ -117,6 +126,15 @@ public class PantallaVerConfiguracion extends AppCompatActivity {
             public void onSuccess() {
                 // Mensaje indicando que la contraseña se cambió correctamente
                 Toast.makeText(PantallaVerConfiguracion.this, "Contraseña cambiada con éxito", Toast.LENGTH_SHORT).show();
+
+                // Esperar unos segundos antes de cerrar el diálogo
+                new Handler().postDelayed(new Runnable() {
+                    @Override
+                    public void run() {
+                        cambioContrasenaExitoso = true;
+                        cerrarDialogoModificarContrasena();
+                    }
+                }, 8000); // Espera 8 segundos
             }
 
             @Override
@@ -127,60 +145,115 @@ public class PantallaVerConfiguracion extends AppCompatActivity {
         });
     }
 
-    // ---------------------------------------------- Opción "Modificar ingreso mensual" ----------------------------------------------
+    // Método para cerrar el diálogo
+    private void cerrarDialogoModificarContrasena() {
+        if (cambioContrasenaExitoso && dialog != null && dialog.isShowing()) {
+            dialog.dismiss();
+        }
+    }
 
-    String nuevoIngresoMensual;  // Almacenar el nuevo ingreso mensual
+    // ---------------------------------------------- Opción "Modificar ingreso mensual" ----------------------------------------------
 
     // Método para mostrar el diálogo de opción Modificar ingreso mensual
     private void mostrarDialogoModificarIngresoMensual() {
         // Crear el diálogo
-        AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        View dialogView = getLayoutInflater().inflate(R.layout.dialog_modificar_ingreso_mensual, null);
-        builder.setView(dialogView);
-        AlertDialog dialog = builder.create();
+        if (dialog == null) {
+            AlertDialog.Builder builder = new AlertDialog.Builder(this);
+            View dialogView = getLayoutInflater().inflate(R.layout.dialog_modificar_ingreso_mensual, null);
+            builder.setView(dialogView);
+            dialog = builder.create();
+        }
 
         // Obtener referencias a los elementos del diálogo
-        EditText editTextNuevoIngresoMensual = dialogView.findViewById(R.id.EditText_nuevoSueldo);
-        Button botonAceptar = dialogView.findViewById(R.id.boton_aceptar);
+        editTextNuevoIngresoMensual = dialog.findViewById(R.id.editText_nuevoIngresoMensual);
+        Button botonAceptar = dialog.findViewById(R.id.boton_aceptar);
 
         // Configurar el botón "Aceptar"
         botonAceptar.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                // Obtener el nuevo ingreso mensual desde el EditText
-                nuevoIngresoMensual = editTextNuevoIngresoMensual.getText().toString();
-
-                // Llamar al método original para manejar el clic del botón
                 onClickAceptarModificarIngresoMensual(v);
-                dialog.dismiss(); // Cerrar el diálogo después de hacer clic en Aceptar
             }
         });
 
-        // Mostrar el diálogo
         dialog.show();
     }
 
-    // Método para manejar el botón "Aceptar"
+    // Método para manejar el botón "Aceptar" en Modificar ingreso mensual
     public void onClickAceptarModificarIngresoMensual(View view) {
-        // Verificar que el nuevo ingreso mensual no esté vacío
-        if (nuevoIngresoMensual != null && !nuevoIngresoMensual.isEmpty()) {
-            // Lógica para actualizar el ingreso mensual en FirebaseManager
+        // Obtener el nuevo ingreso mensual desde el EditText
+        nuevoIngresoMensual = editTextNuevoIngresoMensual.getText().toString();
+
+        // Obtener el ingreso mensual actual
+        obtenerIngresoMensualActual();
+
+    }
+
+    // Método para obtener el ingreso mensual actual del usuario
+    private void obtenerIngresoMensualActual() {
+        // Obtener el usuario actual
+        FirebaseUser user = FirebaseManager.getInstance().getCurrentUser();
+
+        if (user != null) {
+            // Obtener el correo electrónico del usuario
+            String userEmail = user.getEmail();
+
+            // Llamar al método para obtener el ingreso mensual
+            FirebaseManager.getInstance().obtenerIngresoMensual(userEmail).addOnCompleteListener(task -> {
+                if (task.isSuccessful() && task.getResult() != null) {
+                    Double ingresoActual = task.getResult().getDouble("ingresoMensual");
+                    if (ingresoActual != null) {
+                        ingresoMensualActual = ingresoActual;
+                        // Llamada al método para actualizar el ingreso mensual
+                        actualizarIngresoMensual();
+                    } else {
+                        // Manejar el caso en que no se pudo obtener el ingreso mensual actual
+                        Toast.makeText(PantallaVerConfiguracion.this, "No se pudo obtener el ingreso mensual actual", Toast.LENGTH_SHORT).show();
+                    }
+                } else {
+                    // Manejar el fallo al obtener el ingreso mensual actual
+                    Toast.makeText(PantallaVerConfiguracion.this, "Error al obtener el ingreso mensual actual", Toast.LENGTH_SHORT).show();
+                }
+            });
+        } else {
+            // Manejar el caso en que no se pudo obtener el usuario actual
+            Toast.makeText(this, "No se pudo obtener el usuario actual", Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    // Método para actualizar el ingreso mensual en FirebaseManager
+    private void actualizarIngresoMensual() {
+        if (!nuevoIngresoMensual.isEmpty() && !nuevoIngresoMensual.equals(ingresoMensualActual.toString())) {
             FirebaseManager.getInstance().actualizarIngresoMensual(nuevoIngresoMensual, new FirebaseManager.AuthCallback() {
                 @Override
                 public void onSuccess() {
-                    // Mensaje de éxito
+                    // Mensaje indicando que el ingreso mensual se cambió correctamente
                     Toast.makeText(PantallaVerConfiguracion.this, "Ingreso mensual actualizado con éxito", Toast.LENGTH_SHORT).show();
+                    // Esperar unos segundos antes de cerrar el diálogo
+                    new Handler().postDelayed(new Runnable() {
+                        @Override
+                        public void run() {
+                            cambioSueldoExitoso = true;
+                            cerrarDialogoModificarIngresoMensual();
+                        }
+                    }, 8000); // Espera 8 segundos
                 }
 
                 @Override
                 public void onFailure(String errorMessage) {
-                    // Mensaje de error
-                    Toast.makeText(PantallaVerConfiguracion.this, "Error al actualizar el ingreso mensual: " + errorMessage, Toast.LENGTH_SHORT).show();
+                    Toast.makeText(PantallaVerConfiguracion.this, "Error al modificar el ingreso mensual: " + errorMessage, Toast.LENGTH_SHORT).show();
                 }
             });
         } else {
-            // Mostrar mensaje de error si el nuevo ingreso mensual está vacío
-            Toast.makeText(this, "Ingrese un nuevo ingreso mensual válido", Toast.LENGTH_SHORT).show();
+            // Mostrar mensaje de que el ingreso mensual no se cambió
+            Toast.makeText(PantallaVerConfiguracion.this, "El nuevo ingreso mensual es el mismo que el actual", Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    // Método para cerrar el diálogo
+    private void cerrarDialogoModificarIngresoMensual() {
+        if (cambioSueldoExitoso && dialog != null && dialog.isShowing()) {
+            dialog.dismiss();
         }
     }
 
@@ -192,7 +265,7 @@ public class PantallaVerConfiguracion extends AppCompatActivity {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         View dialogView = getLayoutInflater().inflate(R.layout.dialog_eliminar_cuenta, null);
         builder.setView(dialogView);
-        AlertDialog dialog = builder.create();
+        dialog = builder.create();
 
         // Obtener referencias a los elementos del diálogo
         EditText editTextContrasenaActual = dialogView.findViewById(R.id.editText_contrasena_actual);
@@ -203,7 +276,6 @@ public class PantallaVerConfiguracion extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 onClickAceptarEliminarCuenta(v);
-                dialog.dismiss(); // Cerrar el diálogo después de hacer clic en Aceptar
             }
         });
 
@@ -211,43 +283,59 @@ public class PantallaVerConfiguracion extends AppCompatActivity {
         dialog.show();
     }
 
-    // Método para manejar el botón "Aceptar" en el diálogo de Eliminar cuenta
+    // Método para manejar el botón "Aceptar" en Eliminar cuenta
     public void onClickAceptarEliminarCuenta(View view) {
         // Obtener la contraseña actual desde el EditText
-        EditText editTextContrasenaActual = findViewById(R.id.editText_contrasena_actual);
+        EditText editTextContrasenaActual = dialog.findViewById(R.id.editText_contrasena_actual);
         String contrasenaActual = editTextContrasenaActual.getText().toString();
 
         // Verificar la contraseña actual antes de proceder con la eliminación de la cuenta
         verificarContrasenaActual(contrasenaActual);
     }
 
-    // Método para verificar la contraseña actual antes de proceder con la eliminación de la cuenta
+    // Método para verificar la contraseña actual
     private void verificarContrasenaActual(String contrasenaActual) {
         FirebaseManager.getInstance().verificarContrasenaActual(contrasenaActual, new FirebaseManager.AuthCallback() {
             @Override
             public void onSuccess() {
-                // Contraseña verificada, proceder con la eliminación de la cuenta
-                FirebaseManager.getInstance().eliminarCuenta(new FirebaseManager.AuthCallback() {
-                    @Override
-                    public void onSuccess() {
-                        // Eliminación de cuenta exitosa, redirigir al usuario a la pantalla inicial
-                        irAPrimeraPantalla();
-                    }
-
-                    @Override
-                    public void onFailure(String errorMessage) {
-                        // Mensaje de error al eliminar la cuenta
-                        Toast.makeText(PantallaVerConfiguracion.this, "Error al eliminar la cuenta: " + errorMessage, Toast.LENGTH_SHORT).show();
-                    }
-                });
+                // Contraseña verificada, eliminar cuenta
+                eliminarCuenta();
             }
 
             @Override
             public void onFailure(String errorMessage) {
                 // Mensaje de error si la contraseña no es válida
                 Toast.makeText(PantallaVerConfiguracion.this, "Error: " + errorMessage, Toast.LENGTH_SHORT).show();
+                // Cerrar el diálogo en caso de error
+                cerrarDialogoEliminarCuenta();
             }
         });
+    }
+
+    // Método para eliminar la cuenta
+    private void eliminarCuenta(){
+        FirebaseManager.getInstance().eliminarCuenta(new FirebaseManager.AuthCallback() {
+            @Override
+            public void onSuccess() {
+                cerrarDialogoEliminarCuenta();
+                irAPrimeraPantalla();
+            }
+
+            @Override
+            public void onFailure(String errorMessage) {
+                // Mensaje de error al eliminar la cuenta
+                Toast.makeText(PantallaVerConfiguracion.this, "Error al eliminar la cuenta: " + errorMessage, Toast.LENGTH_SHORT).show();
+                // Cerrar el diálogo en caso de error
+                cerrarDialogoEliminarCuenta();
+            }
+        });
+    }
+
+    // Método para cerrar el diálogo
+    private void cerrarDialogoEliminarCuenta() {
+        if (dialog != null && dialog.isShowing()) {
+            dialog.dismiss();
+        }
     }
 
     // Método para redirigir al usuario a PrimeraPantalla

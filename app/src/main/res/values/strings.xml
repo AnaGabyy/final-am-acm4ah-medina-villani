@@ -184,6 +184,7 @@
 
     <!-- Titulo y textos -->
     <string name="titulo_configuracion">Configuracion</string>
+    <string name="nuevo_sueldo">Nuevo ingreso mensual</string>
 
     <!-- Descripción de imágenes -->
     <string name="imagen_pantalla_configuracion">Imagen pantalla configuracion</string>

@@ -38,6 +38,31 @@ public class PantallaVerGastos extends AppCompatActivity {
         currentUser = firebaseManager.getCurrentUser();
         tableLayout = findViewById(R.id.tableLayout);
 
+        // Obtener y guardar los datos del usuario
+        firebaseManager.obtenerYGuardarDatosUsuario(currentUser.getEmail(), firebaseManager, new FirebaseManager.AuthCallback() {
+            @Override
+            public void onSuccess() {
+                // Acceder a la instancia de FirebaseManager y obtener los datos actualizados
+                FirebaseManager firebaseManager = FirebaseManager.getInstance();
+
+                // Obtener los gastos fijos desde FirebaseManager
+                ArrayList<String> tiposGastos = firebaseManager.getTiposGastos();
+                ArrayList<String> montos = firebaseManager.getMontos();
+
+                // Llenar la tabla con la información de gastos fijos
+                if (tiposGastos != null && montos != null) {
+                    for (int i = 0; i < tiposGastos.size(); i++) {
+                        agregarFilaTabla(tiposGastos.get(i), montos.get(i));
+                    }
+                }
+
+            }
+
+            @Override
+            public void onFailure(String errorMessage) {
+                // Manejar el fallo según sea necesario
+            }
+        });
 
         // Obtener la información de gastos fijos del Intent
         ArrayList<String> tiposGastos = getIntent().getStringArrayListExtra("tiposGastos");
@@ -49,10 +74,6 @@ public class PantallaVerGastos extends AppCompatActivity {
                 agregarFilaTabla(tiposGastos.get(i), montos.get(i));
             }
         }
-
-        // Ejemplo de agregar filas a la tabla
-        agregarFilaTabla("Comida", "$50");
-        agregarFilaTabla("Transporte", "$30");
 
         // Botón 'Volver'
         Button botonVolver = findViewById(R.id.boton_volver);
@@ -172,6 +193,7 @@ public class PantallaVerGastos extends AppCompatActivity {
             // Agregar el gasto a Firestore
             firebaseManager.agregarGasto(userEmail, tipoGasto, monto);
             Toast.makeText(this, "Gasto agregado", Toast.LENGTH_SHORT).show();
+            actualizarTabla();
         } else {
             // El usuario no está autenticado
             Toast.makeText(this, "Error: Usuario no autenticado", Toast.LENGTH_SHORT).show();
@@ -210,6 +232,7 @@ public class PantallaVerGastos extends AppCompatActivity {
                                 if (task.isSuccessful()) {
                                     // Lógica después de una actualización exitosa
                                     Toast.makeText(PantallaVerGastos.this, "Gasto modificado exitosamente", Toast.LENGTH_SHORT).show();
+                                    actualizarTabla();
                                 } else {
                                     // Lógica en caso de fallo en la actualización
                                     Toast.makeText(PantallaVerGastos.this, "Error al modificar el gasto", Toast.LENGTH_SHORT).show();
@@ -241,10 +264,34 @@ public class PantallaVerGastos extends AppCompatActivity {
             // Eliminar el gasto de Firestore
             firebaseManager.eliminarGasto(userEmail, tipoGasto);
             Toast.makeText(this, "Gasto eliminado", Toast.LENGTH_SHORT).show();
+            actualizarTabla();
         } else {
             // El usuario no está autenticado
             Toast.makeText(this, "Error: Usuario no autenticado", Toast.LENGTH_SHORT).show();
         }
     }
-    
+
+    private void actualizarTabla() {
+        // Limpiar la tabla antes de agregar las filas actualizadas
+        tableLayout.removeAllViews();
+
+        // Obtener la información de gastos fijos del Intent
+        ArrayList<String> tiposGastos = getIntent().getStringArrayListExtra("tiposGastos");
+        ArrayList<String> montos = getIntent().getStringArrayListExtra("montos");
+
+        // Llenar la tabla con la información de gastos fijos
+        if (tiposGastos != null && montos != null) {
+            for (int i = 0; i < tiposGastos.size(); i++) {
+                agregarFilaTabla(tiposGastos.get(i), montos.get(i));
+            }
+        }
+    }
+
+    // Método onResume para actualizar la tabla cada vez que se vuelve a entrar a la pantalla
+    @Override
+    protected void onResume() {
+        super.onResume();
+        actualizarTabla();
+    }
+
 }

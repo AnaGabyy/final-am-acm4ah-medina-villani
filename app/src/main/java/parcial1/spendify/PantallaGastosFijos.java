@@ -42,10 +42,6 @@ public class PantallaGastosFijos extends AppCompatActivity {
 
         // Configurar FirebaseManager
         firebaseManager = FirebaseManager.getInstance();
-
-        // Ejemplo de agregar filas a la tabla
-        agregarFilaTabla("Alquiler", "$1000");
-        agregarFilaTabla("Electricidad", "$150");
     }
 
     private void agregarFilaTabla(String tipoGasto, String monto) {
@@ -213,10 +209,18 @@ public class PantallaGastosFijos extends AppCompatActivity {
         }
     }
 
-    public void continuar(View view) {
-        // Lógica para continuar a PantallaIndex
-        Intent intent = new Intent(this, PantallaIndex.class);
+    // Método para enviar los gastos fijos a PantallaVerGastos
+    private void enviarGastosFijos(ArrayList<String> tiposGastos, ArrayList<String> montos) {
+        // Crear el Intent para PantallaVerGastos
+        Intent intentVerGastos = new Intent(this, PantallaVerGastos.class);
+        intentVerGastos.putStringArrayListExtra("tiposGastos", tiposGastos);
+        intentVerGastos.putStringArrayListExtra("montos", montos);
 
+        // startActivity(intentVerGastos);
+    }
+
+    // Método para el botón 'Continuar'
+    public void continuar(View view) {
         // Obtener la información de gastos fijos de las filas de la tabla
         ArrayList<String> tiposGastos = new ArrayList<>();
         ArrayList<String> montos = new ArrayList<>();
@@ -231,11 +235,13 @@ public class PantallaGastosFijos extends AppCompatActivity {
             montos.add(cellMonto.getText().toString());
         }
 
-        // Agregar la información de gastos fijos al Intent
-        intent.putStringArrayListExtra("tiposGastos", tiposGastos);
-        intent.putStringArrayListExtra("montos", montos);
+        // Llamar al método para enviar gastos fijos
+        enviarGastosFijos(tiposGastos, montos);
 
-        startActivity(intent);
+        // Crear el Intent para PantallaIndex
+        Intent intentIndex = new Intent(this, PantallaIndex.class);
+        // Iniciar PantallaIndex
+        startActivity(intentIndex);
     }
 
     // Función para agregar un gasto a Firestore

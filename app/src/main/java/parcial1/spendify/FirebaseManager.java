@@ -81,7 +81,7 @@ public class FirebaseManager {
                             callback.onSuccess();
                         } else {
                             // Error en la reautenticación, notificar al callback
-                            callback.onFailure(Objects.requireNonNull(task.getException()).getMessage());
+                            callback.onFailure("Error al reautenticar: " + Objects.requireNonNull(task.getException()).getMessage());
                         }
                     });
         } else {
@@ -89,6 +89,7 @@ public class FirebaseManager {
             callback.onFailure("Usuario no autenticado");
         }
     }
+
 
     // Cambiar la contraseña del usuario
     public void cambiarContrasena(String newPassword, AuthCallback callback) {
@@ -117,21 +118,27 @@ public class FirebaseManager {
             // Obtener referencia al documento del usuario
             DocumentReference usuarioRef = firestore.collection("usuarios").document(Objects.requireNonNull(user.getEmail()));
 
-            // Crear un mapa con el nuevo ingreso mensual
-            Map<String, Object> nuevoIngresoMap = new HashMap<>();
-            nuevoIngresoMap.put("ingresoMensual", nuevoIngresoMensual);
+            // Verificar si el nuevo ingreso mensual es diferente al actual
+            if (!nuevoIngresoMensual.isEmpty() && !nuevoIngresoMensual.equals(user.getEmail())) {
+                // Crear un mapa con el nuevo ingreso mensual
+                Map<String, Object> nuevoIngresoMap = new HashMap<>();
+                nuevoIngresoMap.put("ingresoMensual", nuevoIngresoMensual);
 
-            // Actualizar el ingreso mensual en Firestore
-            usuarioRef.update(nuevoIngresoMap)
-                    .addOnCompleteListener(task -> {
-                        if (task.isSuccessful()) {
-                            // Actualización exitosa
-                            callback.onSuccess();
-                        } else {
-                            // Error en la actualización
-                            callback.onFailure(Objects.requireNonNull(task.getException()).getMessage());
-                        }
-                    });
+                // Actualizar el ingreso mensual en Firestore
+                usuarioRef.update(nuevoIngresoMap)
+                        .addOnCompleteListener(task -> {
+                            if (task.isSuccessful()) {
+                                // Actualización exitosa
+                                callback.onSuccess();
+                            } else {
+                                // Error en la actualización
+                                callback.onFailure("Error al actualizar el ingreso mensual: " + Objects.requireNonNull(task.getException()).getMessage());
+                            }
+                        });
+            } else {
+                // Mostrar mensaje de que el ingreso mensual no se cambió
+                callback.onFailure("El nuevo ingreso mensual es el mismo que el actual");
+            }
         } else {
             // El usuario no está autenticado
             callback.onFailure("Usuario no autenticado");
@@ -253,6 +260,78 @@ public class FirebaseManager {
         }
     }
 
+    // Variables para almacenar los datos del usuario
+    private String ingresoMensual;
+    private ArrayList<String> tiposGastos;
+    private ArrayList<String> montos;
+
+    // Método para obtener y guardar los datos del usuario
+    public void obtenerYGuardarDatosUsuario(String userEmail, FirebaseManager firebaseManager, AuthCallback callback) {
+        // Obtener referencia al documento del usuario
+        DocumentReference usuarioRef = firestore.collection("usuarios").document(userEmail);
+
+        // Obtener los datos del usuario
+        usuarioRef.get().addOnCompleteListener(task -> {
+            if (task.isSuccessful()) {
+                DocumentSnapshot document = task.getResult();
+                if (document.exists()) {
+                    String ingresoMensual = document.getString("ingresoMensual");
+
+                    // Crear un ArrayList para guardar los gastos fijos del usuario
+                    ArrayList<String> tiposGastos = new ArrayList<>();
+                    ArrayList<String> montos = new ArrayList<>();
+
+                    // Obtener los gastos fijos del documento del usuario
+                    if (document.contains("gastosFijos")) {
+                        // Utilizar un parámetro de tipo genérico
+                        Map<String, Object> gastosFijosMap = document.getData();
+                        if (gastosFijosMap != null) {
+                            for (Map.Entry<String, Object> entry : gastosFijosMap.entrySet()) {
+                                tiposGastos.add(entry.getKey());
+                                montos.add(String.valueOf(entry.getValue()));
+                            }
+                        }
+                    }
+
+                    // Establecer el ingreso mensual y los gastos fijos en FirebaseManager
+                    firebaseManager.setIngresoMensual(ingresoMensual);
+                    firebaseManager.setGastosFijos(tiposGastos, montos);
+
+                    callback.onSuccess();
+                } else {
+                    // El documento del usuario no existe
+                    callback.onFailure("Documento de usuario no encontrado");
+                }
+            } else {
+                // Error al obtener los datos del usuario
+                callback.onFailure("Error al obtener datos del usuario: " + Objects.requireNonNull(task.getException()).getMessage());
+            }
+        });
+    }
+
+    // Métodos para acceder y modificar el ingreso mensual
+    public String getIngresoMensual() {
+        return ingresoMensual;
+    }
+
+    public void setIngresoMensual(String ingresoMensual) {
+        this.ingresoMensual = ingresoMensual;
+    }
+
+    // Métodos para acceder y modificar los gastos fijos
+    public ArrayList<String> getTiposGastos() {
+        return tiposGastos;
+    }
+
+    public ArrayList<String> getMontos() {
+        return montos;
+    }
+
+    public void setGastosFijos(ArrayList<String> tiposGastos, ArrayList<String> montos) {
+        this.tiposGastos = tiposGastos;
+        this.montos = montos;
+    }
+
     // ------------------------------- PantallaVerResumenMensual -------------------------------
 
     // Obtener los gastos mensuales del usuario
@@ -290,7 +369,9 @@ public class FirebaseManager {
     }
 
     // Método para cerrar la sesión
-    public void cerrarSesion() {
+    public void cerrarSesion(AuthCallback callback) {
         mAuth.signOut();
+        // Notificar sobre el éxito del cierre de sesión
+        callback.onSuccess();
     }
 }
